@@ -13,7 +13,7 @@ define('CLAUDE_VERSION',    '1.0.0');
 define('CLAUDE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CLAUDE_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-// Include files
+// FILES
 require_once CLAUDE_PLUGIN_DIR . 'includes/claude_activator.php';
 require_once CLAUDE_PLUGIN_DIR . 'includes/claude_deactivator.php';
 require_once CLAUDE_PLUGIN_DIR . 'includes/admin_page.php';

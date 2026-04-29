@@ -15,14 +15,13 @@ class Claude_Admin {
      * It registers all the hooks this class needs
      */
     public function init() {
-        add_action('admin_menu',             array($this, 'register_menu'));
-        add_action('admin_enqueue_scripts',  array($this, 'enqueue_assets'));
-        add_action('wp_ajax_claude_save_settings', array($this, 'save_settings'));
+        add_action('admin_menu',             array($this, 'register_menu')); //array(instance, func name)
+        add_action('admin_enqueue_scripts',  array($this, 'enqueue_assets')); 
+        add_action('wp_ajax_claude_save_settings', array($this, 'save_settings')); 
     }
 
     /**
-     * Registers the plugin page in WordPress sidebar
-     */
+     * Registers theAdmin Menu in WordPress sidebar  */
     public function register_menu() {
         add_menu_page(
             'Claude by Hafi',       // Page title
@@ -58,7 +57,7 @@ class Claude_Admin {
             true
         );
 
-        // Pass data to JS
+        // Pass data to JS CREATING NOUNCE
         wp_localize_script('claude_admin_script', 'claude_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('claude_nonce'),
@@ -67,7 +66,7 @@ class Claude_Admin {
 
     
     //   Prints the HTML of the settings page
-    public function render_page() {
+    public function render_page() { 
         $options        = get_option('claude_settings', array());
         $api_key        = !empty($options['api_key'])        ? esc_attr($options['api_key']) : '';
         $content_access = !empty($options['content_access']) ? 1 : 0;
