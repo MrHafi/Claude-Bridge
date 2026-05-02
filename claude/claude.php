@@ -5,7 +5,6 @@
  * Version: 1.0.0
  * Author: Hafi
  */
-// GROQ API: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
 if (!defined('ABSPATH')) exit;
 
 // Constants
