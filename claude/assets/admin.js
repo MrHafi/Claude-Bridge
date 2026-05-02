@@ -84,5 +84,17 @@ $('#claude_send_btn').on('click', function() {
 
 
 
+// TABS IN ADMIN DASHBOARD -----------------
+// tab switching
+$('.claude-tab-btn').on('click', function() {
+    var tab = $(this).data('tab');                           // get which tab was clicked
+
+    $('.claude-tab-btn').removeClass('active');              // deactivate all tab buttons
+    $('.claude-tab-content').removeClass('active');          // hide all tab content
+
+    $(this).addClass('active');                              // activate clicked button
+    $('#claude-tab-' + tab).addClass('active');              // show matching content
+});
+
 
 }); // close ready()

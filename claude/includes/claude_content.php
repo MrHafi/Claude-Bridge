@@ -3,7 +3,16 @@ if (!defined('ABSPATH')) exit;
 
 function claude_ask_groq($instruction, $groq_api_key) {
 
-    $system_prompt = 'You are a WordPress assistant with full dashboard access. Based on the user instruction, return ONLY a valid JSON array of action objects. Even for a single action, always return an array. No markdown, no explanation.
+  $system_prompt = 'You are a WordPress assistant. You must follow these rules strictly:
+
+RULES:
+1. Only perform the EXACT action the user asked for. Nothing else.
+2. If user says "delete X plugin" — only delete that plugin, nothing else.
+3. If user says "delete X" and X is clearly a plugin or theme name — only delete that.
+4. Never guess or run extra actions. If you are not 100% sure what to do, return: {"action": "unclear", "message": "Please be more specific"}
+5. Always return a JSON array even for one action.
+6. For activate/deactivate/delete/update plugin — always use "search" field with exactly what user typed, never guess or modify it.
+
 
 POSTS & PAGES:
 Create post:   {"action": "create_post", "title": "Title", "content": "Content", "status": "publish", "category": ""}
@@ -17,11 +26,19 @@ Delete user:   {"action": "delete_user", "email": "john@email.com"}
 Update role:   {"action": "update_user_role", "email": "john@email.com", "role": "editor"}
 
 PLUGINS:
-Install plugin:    {"action": "install_plugin", "slug": "woocommerce"}
-Activate plugin:   {"action": "activate_plugin", "slug": "woocommerce"}
-Deactivate plugin: {"action": "deactivate_plugin", "slug": "woocommerce"}
-Delete plugin:     {"action": "delete_plugin", "slug": "woocommerce"}
-Update plugin:     {"action": "update_plugin", "slug": "woocommerce"}
+Install plugin:    {"action": "install_plugin", "slug": "exact-wordpress-org-slug", "search": "what user typed"}
+Activate plugin:   {"action": "activate_plugin", "search": "what user typed"}
+Deactivate plugin: {"action": "deactivate_plugin", "search": "what user typed"}
+Delete plugin:     {"action": "delete_plugin", "search": "what user typed"}
+Update plugin:     {"action": "update_plugin", "search": "what user typed"}
+
+For install, always use the exact wordpress.org slug. Examples:
+updraft = updraftplus
+yoast = wordpress-seo
+woocommerce = woocommerce
+contact form = contact-form-7
+elementor = elementor
+rankmath = seo-by-rank-math
 
 THEMES:
 Install theme:   {"action": "install_theme", "slug": "astra"}
@@ -46,7 +63,10 @@ Delete menu:        {"action": "delete_menu", "name": "Main Menu"}
 
 IMPORTANT: Always return a JSON array even for one action. Example: [{"action":"create_post","title":"Hello","content":"World","status":"publish","category":""}]
 If password is not mentioned, set "password" to empty string.
-Return ONLY the JSON array. Nothing else.';
+Return ONLY the JSON array. Nothing else.
+
+ 
+';
 
     $response = wp_remote_post('https://api.groq.com/openai/v1/chat/completions', array(
         'timeout'   => 30,
@@ -161,54 +181,45 @@ function claude_execute_content($data) {
         return 'User not found: ' . $data['email'];
     }
 
-    if ($action === 'install_plugin') {
-        require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
-        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-        $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
-        $result   = $upgrader->install('https://downloads.wordpress.org/plugin/' . $data['slug'] . '.latest-stable.zip');
-        return $result ? 'Plugin installed: ' . $data['slug'] : 'Failed to install: ' . $data['slug'];
-    }
+   if ($action === 'install_plugin') {
+    require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+    require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+    $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
+    $result   = $upgrader->install('https://downloads.wordpress.org/plugin/' . $data['slug'] . '.latest-stable.zip');
+    return $result ? 'Plugin installed: ' . $data['search'] : 'Failed to install: ' . $data['search'];
+}
 
     if ($action === 'activate_plugin') {
-        $file   = $data['slug'] . '/' . $data['slug'] . '.php';
-        $result = activate_plugin($file);
-        return is_wp_error($result) ? 'Failed to activate: ' . $result->get_error_message() : 'Plugin activated: ' . $data['slug'];
+        $plugin = claude_find_plugin($data['search']);   // search installed plugins by what user typed
+        if (!$plugin) return 'Plugin not found: ' . $data['search'];
+        $result = activate_plugin($plugin['file']);
+        return is_wp_error($result) ? 'Failed to activate: ' . $result->get_error_message() : 'Plugin activated: ' . $plugin['name'];
     }
 
-  if ($action === 'deactivate_plugin') {
-    $all_plugins = get_plugins(); // get all installed plugins
-    $target      = null;
-
-    // search through all plugins to find one matching our slug
-    foreach ($all_plugins as $file => $info) {
-        if (strpos($file, $data['slug']) !== false) {
-            $target = $file; // found the real file path
-            break;
-        }
+    if ($action === 'deactivate_plugin') {
+        $plugin = claude_find_plugin($data['search']);
+        if (!$plugin) return 'Plugin not found: ' . $data['search'];
+        deactivate_plugins($plugin['file']);
+        return 'Plugin deactivated: ' . $plugin['name'];
     }
 
-    if (!$target) return 'Plugin not found: ' . $data['slug'];
-    deactivate_plugins($target);
-    return 'Plugin deactivated: ' . $data['slug'];
-}
-
-if ($action === 'delete_plugin') {
-    require_once ABSPATH . 'wp-admin/includes/plugin.php';
-    $all_plugins = get_plugins();
-    $target      = null;
-
-    foreach ($all_plugins as $file => $info) {
-        if (strpos($file, $data['slug']) !== false) {
-            $target = $file;
-            break;
-        }
+    if ($action === 'delete_plugin') {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        $plugin = claude_find_plugin($data['search']);
+        if (!$plugin) return 'Plugin not found: ' . $data['search'];
+        deactivate_plugins($plugin['file']);
+        delete_plugins(array($plugin['file']));
+        return 'Plugin deleted: ' . $plugin['name'];
     }
 
-    if (!$target) return 'Plugin not found: ' . $data['slug'];
-    deactivate_plugins($target);
-    delete_plugins(array($target));
-    return 'Plugin deleted: ' . $data['slug'];
-}
+    if ($action === 'update_plugin') {
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        $plugin = claude_find_plugin($data['search']);
+        if (!$plugin) return 'Plugin not found: ' . $data['search'];
+        $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
+        $result   = $upgrader->upgrade($plugin['file']);
+        return $result ? 'Plugin updated: ' . $plugin['name'] : 'Failed to update: ' . $plugin['name'];
+    }
 
     if ($action === 'update_plugin') {
         require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
@@ -314,7 +325,12 @@ if ($action === 'delete_plugin') {
 }
 
 
-// saves last 20 to DB and full history to log file
+
+
+
+
+
+// saves last 20 to DB and full history to log file 
 function claude_log_action($instruction, $action, $result) {
 
     $log_dir  = CLAUDE_PLUGIN_DIR . 'includes/';
@@ -345,4 +361,39 @@ function claude_log_action($instruction, $action, $result) {
     }
 
     update_option('claude_chat_history', $history);
+}
+
+
+// searches installed plugins by name  no slug guessing needed
+function claude_find_plugin($query) {
+    $all_plugins = get_plugins();
+    
+    // clean query — remove dashes, extra spaces, lowercase
+    $query      = strtolower(trim(str_replace('-', ' ', $query)));
+    $query      = preg_replace('/\s+/', ' ', $query); // remove double spaces
+
+    foreach ($all_plugins as $file => $info) {
+        $name       = strtolower(str_replace('-', ' ', $info['Name']));
+        $file_lower = strtolower(str_replace('-', ' ', $file));
+
+        // direct match
+        if (stripos($name, $query) !== false || stripos($file_lower, $query) !== false) {
+            return array('file' => $file, 'name' => $info['Name']);
+        }
+
+        // word by word match
+        $query_words   = explode(' ', $query);
+        $matched_words = 0;
+        foreach ($query_words as $word) {
+            if (strlen($word) > 2 && stripos($name, $word) !== false) {
+                $matched_words++;
+            }
+        }
+
+        if ($matched_words >= ceil(count($query_words) / 2)) {
+            return array('file' => $file, 'name' => $info['Name']);
+        }
+    }
+
+    return null;
 }

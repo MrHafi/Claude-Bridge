@@ -43,7 +43,7 @@ class Claude_Admin {
 
         wp_enqueue_style(
             'claude_admin_style',
-            CLAUDE_PLUGIN_URL . 'assets/admin.css',
+            CLAUDE_PLUGIN_URL . 'assets/style.css',
             array(),
             CLAUDE_VERSION
         );
@@ -64,122 +64,9 @@ class Claude_Admin {
     }
 
     
-    //   FRONTEND OF ADMIN MENU -------------------------------------
-   public function render_page() { 
-        // FETCHING FROM DB TO DISPLAY
-    $options        = get_option('claude_settings', array());
-    $api_key        = !empty($options['api_key'])        ? esc_attr($options['api_key']) : '';
-    $content_access = !empty($options['content_access']) ? 1 : 0;
-    $file_access    = !empty($options['file_access'])    ? 1 : 0;
-    $db_access      = !empty($options['db_access'])      ? 1 : 0;
-    $groq_api_key   = !empty($options['groq_api_key'])   ? esc_attr($options['groq_api_key']) : '';
-    ?>
-
-
-        <!-- CHAT INTERFACE -->
-        <h2>Chat with Claude</h2>
-        <p style="color:#666;">Type an instruction below. Make sure the right toggles are ON before sending.</p>
-
-        <div id="claude_chat_box" style="
-            background: #1e1e1e;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            min-height: 150px;
-            color: #fff;
-            font-size: 14px;
-        ">
-            <p style="color:#888;">Conversation will appear here...</p>
-        </div>
-
-        <textarea 
-            id="claude_chat_input" 
-            rows="3" 
-            placeholder="e.g. Create a post called Hello World..."
-            style="width:100%; padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; resize:vertical;"
-        ></textarea>
-
-        <br><br>
-        <button type="button" id="claude_send_btn">Send Instruction</button>
-        <span id="claude_chat_loading" style="display:none; margin-left:10px; color:#666;">Thinking...</span>
-        <hr style="margin: 30px 0;">
-
-    <!-- ---------------API FIELDS -------------------------------------  -->
-    <div class="wrap">
-        <h1>Claude by Hafi</h1>
-
-        <div id="claude_notice" style="display:none;"></div>
-
-        <table class="form-table">
-            <tr>
-                <th>API Key</th>
-                <td><input type="password" id="claude_api_key" value="<?php echo $api_key; ?>" /></td>
-            </tr>
-            <tr>
-                <th>Groq API Key</th>
-                <td><input type="password" id="claude_groq_api_key" value="<?php echo $groq_api_key; ?>" /></td>
-            </tr>
-            <tr>
-                <th>Posts, Pages & Users</th>
-                <td><input type="checkbox" id="claude_content_access" <?php checked($content_access, 1); ?> /></td>
-            </tr>
-            <tr>
-                <th>File Manager Access</th>
-                <td><input type="checkbox" id="claude_file_access" <?php checked($file_access, 1); ?> /></td>
-            </tr>
-            <tr>
-                <th>Database Access</th>
-                <td><input type="checkbox" id="claude_db_access" <?php checked($db_access, 1); ?> /></td>
-            </tr>
-        </table>
-
-        <button id="claude_save_btn">Save Settings</button>
-
-        <!-- TEST GROQ -->
-<button type="button" id="claude_test_groq">Test Groq Connection</button>
-        <div id="claude_test_result" style="display:none;"></div>
-
-    </div> <!-- wrap closes here -->
-
-
-
-<!-- LOG UI------------------------------------->
- <!-- LOG VIEWER -->
-<hr style="margin: 30px 0;">
-<h2>Chat History</h2>
-
-<div style="margin-bottom: 10px;">
-    <button type="button" id="claude_clear_log">Clear All Log</button>
-</div>
-
-<div id="claude_log_box" style="
-    background: #1e1e1e;
-    border-radius: 8px;
-    padding: 20px;
-    min-height: 100px;
-    color: #fff;
-    font-size: 13px;
-    font-family: monospace;
-">
-    <?php
-    $history = get_option('claude_chat_history', array());
-    if (empty($history)) {
-        echo '<p style="color:#888;">No history yet.</p>';
-    } else {
-        // show newest first
-        foreach (array_reverse($history) as $entry) {
-            echo '<p style="margin:0 0 10px; border-bottom: 1px solid #333; padding-bottom:8px;">';
-            echo '<span style="color:#888;">' . esc_html($entry['time']) . '</span><br>';
-            echo '<span style="color:#7c6aff;">You: </span>' . esc_html($entry['instruction']) . '<br>';
-            echo '<span style="color:#aaa;">Action: </span>' . esc_html($entry['action']) . '<br>';
-            echo '<span style="color:#38a169;">Result: </span>' . esc_html($entry['result']);
-            echo '</p>';
-        }
-    }
-    ?>
-</div>
-
-    <?php
+    //   FRONTEND OF ADMIN MENU -------------------------------------public function render_page() {
+    public function render_page() {
+    require_once CLAUDE_PLUGIN_DIR . 'includes/admin_view.php';
 }
 
 
