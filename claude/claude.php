@@ -5,7 +5,7 @@
  * Version: 1.0.0
  * Author: Hafi
  */
-
+// GROQ API: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
 if (!defined('ABSPATH')) exit;
 
 // Constants
@@ -17,6 +17,7 @@ define('CLAUDE_PLUGIN_URL', plugin_dir_url(__FILE__));
 require_once CLAUDE_PLUGIN_DIR . 'includes/claude_activator.php';
 require_once CLAUDE_PLUGIN_DIR . 'includes/claude_deactivator.php';
 require_once CLAUDE_PLUGIN_DIR . 'includes/admin_page.php';
+require_once CLAUDE_PLUGIN_DIR . 'includes/claude_content.php';
 
 /**
  * Main plugin class — acts as the manager.

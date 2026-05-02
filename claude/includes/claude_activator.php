@@ -18,6 +18,7 @@ class Claude_Activator {
         if (!get_option('claude_settings')) {
             add_option('claude_settings', array(
                 'api_key'        => '',
+                'groq_api_key'   => '', // Groq API key
                 'content_access' => 0,
                 'file_access'    => 0,
                 'db_access'      => 0,
