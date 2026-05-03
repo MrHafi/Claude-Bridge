@@ -19,10 +19,13 @@ class Claude_Admin {
         add_action('wp_ajax_claude_test_groq', array($this, 'test_groq_connection')); 
         //CLAUD.GROQ HANDLE INSTRUCTIONS
         add_action('wp_ajax_claude_handle_instruction', array($this, 'handle_instruction'));
+
+
+        // clear log 
+        add_action('wp_ajax_claude_clear_log', array($this, 'clear_log'));
     }
 
-    /**
-     * Registers theAdmin Menu in WordPress sidebar  */
+    /* Registers theAdmin Menu in WordPress sidebar  */
     public function register_menu() {
         add_menu_page(
             'Claude by Hafi',       // Page title
@@ -75,6 +78,11 @@ class Claude_Admin {
     public function save_settings() {
         check_ajax_referer('claude_nonce', 'nonce');
 
+        // sec check
+        if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized.'));
+        }
+
         $settings = array(
             'api_key'        => sanitize_text_field($_POST['api_key']),
             'groq_api_key' => sanitize_text_field($_POST['groq_api_key']),
@@ -93,6 +101,12 @@ class Claude_Admin {
 
 // test groq connection
 public function test_groq_connection() {
+
+        // sec check
+        if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized.'));
+        }
+
     check_ajax_referer('claude_nonce', 'nonce');
 
     $options      = get_option('claude_settings', array());
@@ -105,7 +119,7 @@ public function test_groq_connection() {
 
     $response = wp_remote_post('https://api.groq.com/openai/v1/chat/completions', array(
         'timeout'   => 30, // add timeout
-        'sslverify' => false, // fix SSL issues on local/staging
+        'sslverify' => true, 
         'headers'   => array(
             'Authorization' => 'Bearer ' . $groq_api_key, 
             'Content-Type'  => 'application/json',
@@ -143,10 +157,23 @@ public function test_groq_connection() {
 
 // TRIGGERED THE ASK GROK FUNCTION 
 public function handle_instruction() {
+
+
+        // sec check
+        if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized.'));
+        }
+
     check_ajax_referer('claude_nonce', 'nonce');
 
     $instruction = sanitize_text_field($_POST['instruction']);
     $options     = get_option('claude_settings', array());
+
+
+    // MAX LENTGH FOR USER CHECK    
+    if (strlen($instruction) > 500) {
+        wp_send_json_error(array('message' => 'Instruction too long. Keep it under 500 characters.'));
+    }
 
     if (empty($options['content_access'])) {
         wp_send_json_error(array('message' => 'Content access is OFF. Enable it in settings first.'));
@@ -158,6 +185,25 @@ public function handle_instruction() {
     if (!$actions || !is_array($actions)) {
         wp_send_json_error(array('message' => 'Failed to get response from Groq.'));
     }
+
+                    // PREVENTING GROQ FROM RUNNMING SOMETHING MALLECIOUS. ONLY LIMITED CONCEPT WILL GO
+                    $allowed_actions = array(
+                        'create_post', 'delete_post', 'create_page', 'delete_page',
+                        'create_user', 'delete_user', 'update_user_role',
+                        'install_plugin', 'activate_plugin', 'deactivate_plugin', 'delete_plugin', 'update_plugin',
+                        'install_theme', 'activate_theme', 'delete_theme', 'update_theme',
+                        'update_setting', 'flush_permalinks',
+                        'delete_comment', 'delete_spam_comments', 'delete_all_comments',
+                        'create_menu', 'add_page_to_menu', 'add_link_to_menu', 'delete_menu',
+                        'unclear'
+                    );
+
+                    foreach ($actions as $action_data) {
+                        if (!in_array($action_data['action'] ?? '', $allowed_actions)) {
+                            wp_send_json_error(array('message' => 'Invalid action returned. Please try again and stay in WordPress Dashboard Teritory.'));
+                        }
+                    }
+
 
     $results = array();
 
@@ -172,6 +218,27 @@ public function handle_instruction() {
 
     // join all results and send back to JS
     wp_send_json_success(array('message' => implode('<br>', $results)));
+
+
+// rate limit check 20/hour
+if (!claude_check_rate_limit()) {
+    wp_send_json_error(array('message' => 'Rate limit reached. You can send 20 instructions per hour. Please wait before trying again.'));
 }
 
+}
+
+
+// LOG FILE .//////////////////////////
+public function clear_log() {
+    check_ajax_referer('claude_nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized.'));
+    }
+    delete_option('claude_chat_history');
+    $log_file = CLAUDE_PLUGIN_DIR . 'includes/groq_chat_log.txt';
+    if (file_exists($log_file)) {
+        file_put_contents($log_file, '');
+    }
+    wp_send_json_success(array('message' => 'Log cleared.'));
+}
 }    //end of class
