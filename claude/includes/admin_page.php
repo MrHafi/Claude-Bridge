@@ -21,15 +21,13 @@ class Claude_Admin {
         add_action('wp_ajax_claude_handle_instruction', array($this, 'handle_instruction'));
 
 
-        // clear log 
-        add_action('wp_ajax_claude_clear_log', array($this, 'clear_log'));
     }
 
     /* Registers theAdmin Menu in WordPress sidebar  */
     public function register_menu() {
         add_menu_page(
-            'Claude by Hafi',       // Page title
-            'Claude by Hafi',       // Sidebar title
+            'AI Site Manager',       // Page title
+            'AI Site Manager',       // Sidebar title
             'manage_options',       // Admins only
             'claude_by_hafi',       // Slug
             array($this, 'render_page'), // Callback
@@ -158,87 +156,80 @@ public function test_groq_connection() {
 // TRIGGERED THE ASK GROK FUNCTION 
 public function handle_instruction() {
 
-
-        // sec check
-        if (!current_user_can('manage_options')) {
-        wp_send_json_error(array('message' => 'Unauthorized.'));
-        }
-
+// Verify the request came from our plugin page
     check_ajax_referer('claude_nonce', 'nonce');
+
+    // Only admins can run instructions
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized.'));
+    }
+
 
     $instruction = sanitize_text_field($_POST['instruction']);
     $options     = get_option('claude_settings', array());
 
+    // Stop if user has exceeded 20 instructions per hour
+    if (!claude_check_rate_limit()) {
+        wp_send_json_error(array('message' => 'Rate limit reached. 20 instructions per hour max.'));
+    }
 
-    // MAX LENTGH FOR USER CHECK    
+    // Stop if instruction contains suspicious or invalid content
+    $validation_error = claude_validate_instruction($instruction);
+    if ($validation_error) {
+        wp_send_json_error(array('message' => $validation_error));
+    }
+
+    // Stop if instruction is too long
     if (strlen($instruction) > 500) {
         wp_send_json_error(array('message' => 'Instruction too long. Keep it under 500 characters.'));
     }
 
+    // Stop if content access toggle is OFF in settings
     if (empty($options['content_access'])) {
         wp_send_json_error(array('message' => 'Content access is OFF. Enable it in settings first.'));
     }
 
-    // send to groq — now returns array of actions
+    // Send instruction to Groq and get back an array of actions
     $actions = claude_ask_groq($instruction, $options['groq_api_key']);
 
+    // Stop if Groq returned nothing or something unexpected
     if (!$actions || !is_array($actions)) {
         wp_send_json_error(array('message' => 'Failed to get response from Groq.'));
     }
 
-                    // PREVENTING GROQ FROM RUNNMING SOMETHING MALLECIOUS. ONLY LIMITED CONCEPT WILL GO
-                    $allowed_actions = array(
-                        'create_post', 'delete_post', 'create_page', 'delete_page',
-                        'create_user', 'delete_user', 'update_user_role',
-                        'install_plugin', 'activate_plugin', 'deactivate_plugin', 'delete_plugin', 'update_plugin',
-                        'install_theme', 'activate_theme', 'delete_theme', 'update_theme',
-                        'update_setting', 'flush_permalinks',
-                        'delete_comment', 'delete_spam_comments', 'delete_all_comments',
-                        'create_menu', 'add_page_to_menu', 'add_link_to_menu', 'delete_menu',
-                        'unclear'
-                    );
+    // Only allow actions from our safe whitelist — block anything else
+    $allowed_actions = array(
+        'create_post', 'delete_post', 'create_page', 'delete_page',
+        'create_user', 'delete_user', 'update_user_role',
+        'install_plugin', 'activate_plugin', 'deactivate_plugin', 'delete_plugin', 'update_plugin',
+        'install_theme', 'activate_theme', 'delete_theme', 'update_theme',
+        'update_setting', 'flush_permalinks',
+        'delete_comment', 'delete_spam_comments', 'delete_all_comments',
+        'create_menu', 'add_page_to_menu', 'add_link_to_menu', 'delete_menu',
+        'bulk_draft_posts', 'bulk_publish_posts', 'bulk_delete_posts',
+        'bulk_draft_pages', 'bulk_publish_pages', 'bulk_delete_pages',
+        'empty_trash',
+        'unclear'
+    );
 
-                    foreach ($actions as $action_data) {
-                        if (!in_array($action_data['action'] ?? '', $allowed_actions)) {
-                            wp_send_json_error(array('message' => 'Invalid action returned. Please try again and stay in WordPress Dashboard Teritory.'));
-                        }
-                    }
+    foreach ($actions as $action_data) {
+        if (!in_array($action_data['action'] ?? '', $allowed_actions)) {
+            wp_send_json_error(array('message' => 'Invalid action returned.'));
+        }
+    }
 
-
+    // Execute each action one by one and collect results
     $results = array();
-
-    // loop through each action and execute one by one
     foreach ($actions as $action_data) {
         $result    = claude_execute_content($action_data);
         $results[] = $result;
-
-        // log each action separately
         claude_log_action($instruction, $action_data['action'] ?? 'unknown', $result);
     }
 
-    // join all results and send back to JS
+    // Send all results back to the browser
     wp_send_json_success(array('message' => implode('<br>', $results)));
-
-
-// rate limit check 20/hour
-if (!claude_check_rate_limit()) {
-    wp_send_json_error(array('message' => 'Rate limit reached. You can send 20 instructions per hour. Please wait before trying again.'));
-}
-
 }
 
 
-// LOG FILE .//////////////////////////
-public function clear_log() {
-    check_ajax_referer('claude_nonce', 'nonce');
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(array('message' => 'Unauthorized.'));
-    }
-    delete_option('claude_chat_history');
-    $log_file = CLAUDE_PLUGIN_DIR . 'includes/groq_chat_log.txt';
-    if (file_exists($log_file)) {
-        file_put_contents($log_file, '');
-    }
-    wp_send_json_success(array('message' => 'Log cleared.'));
-}
+
 }    //end of class

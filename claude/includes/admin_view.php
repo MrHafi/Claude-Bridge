@@ -12,7 +12,7 @@ $history        = get_option('claude_chat_history', array());
 ?>
 
 <div class="wrap claude-wrap">
-    <h1>Claude by Hafi</h1>
+    <h1>AI Site Manager</h1>
 
     <!-- TAB BUTTONS -->
     <div class="claude-tabs">
@@ -21,28 +21,139 @@ $history        = get_option('claude_chat_history', array());
         <button class="claude-tab-btn" data-tab="history">Chat History</button>
     </div>
 
-    <!-- TAB 1: CHAT -->
-    <div class="claude-tab-content active" id="claude-tab-chat">
+   <!-- TAB 1: CHAT -->
+<div class="claude-tab-content active" id="claude-tab-chat">
+    <div class="claude-chat-layout">
 
-        <p class="claude-desc">Type an instruction below. Make sure the right toggles are ON in Integration tab.</p>
+        <!-- LEFT: 60% area for chat -->
+        <div class="claude-chat-left">
+            <p class="claude-desc">Type an instruction or click an action from the panel.</p>
 
-        <div id="claude_chat_box" class="claude-chat-box">
-            <p class="claude-chat-placeholder">Conversation will appear here...</p>
+            <div id="claude_chat_box" class="claude-chat-box">
+                <p class="claude-chat-placeholder">Conversation will appear here...</p>
+            </div>
+
+            <textarea
+                id="claude_chat_input"
+                rows="3"
+                placeholder="e.g. Install updraftplus and activate it..."
+                class="claude-textarea"
+            ></textarea>
+
+            <div class="claude-chat-actions">
+                <button type="button" id="claude_send_btn" class="button button-primary">Send Instruction</button>
+                <span id="claude_chat_loading" class="claude-loading">Thinking...</span>
+            </div>
         </div>
 
-        <textarea
-            id="claude_chat_input"
-            rows="3"
-            placeholder="e.g. Install updraftplus and activate it..."
-            class="claude-textarea"
-        ></textarea>
+        <!-- RIGHT: 40% actions panel -->
+        <div class="claude-actions-panel">
+            <div class="claude-panel-header">
+                <span class="claude-panel-title">Quick Actions</span>
+                <button type="button" id="claude_toggle_all" class="claude-toggle-all-btn">Collapse All</button>
+            </div>
 
-        <div class="claude-chat-actions">
-            <button type="button" id="claude_send_btn" class="button button-primary">Send Instruction</button>
-            <span id="claude_chat_loading" class="claude-loading">Thinking...</span>
+            <?php
+            $action_groups = array(
+                array(
+                    'label'   => 'Posts & Pages',
+                    'color'   => 'purple',
+                    'actions' => array(
+                        'Create a post',
+                        'Delete a post',
+                        'Create a page',
+                        'Delete a page',
+                        'Draft all posts',
+                        'Publish all posts',
+                        'Delete all posts',
+                        'Draft all pages',
+                        'Publish all pages',
+                        'Delete all pages',
+                        'Empty trash',
+                    )
+                ),
+                array(
+                    'label'   => 'Users',
+                    'color'   => 'teal',
+                    'actions' => array(
+                        'Create a user',
+                        'Delete a user',
+                        'Update user role',
+                    )
+                ),
+                array(
+                    'label'   => 'Plugins',
+                    'color'   => 'amber',
+                    'actions' => array(
+                        'Install a plugin',
+                        'Activate a plugin',
+                        'Deactivate a plugin',
+                        'Delete a plugin',
+                        'Update a plugin',
+                    )
+                ),
+                array(
+                    'label'   => 'Themes',
+                    'color'   => 'blue',
+                    'actions' => array(
+                        'Install a theme',
+                        'Activate a theme',
+                        'Delete a theme',
+                        'Update a theme',
+                    )
+                ),
+                array(
+                    'label'   => 'Menus',
+                    'color'   => 'pink',
+                    'actions' => array(
+                        'Create a menu',
+                        'Add a page to menu',
+                        'Add a custom link to menu',
+                        'Delete a menu',
+                    )
+                ),
+                array(
+                    'label'   => 'Comments',
+                    'color'   => 'red',
+                    'actions' => array(
+                        'Delete a comment',
+                        'Delete all spam comments',
+                        'Delete all comments',
+                    )
+                ),
+                array(
+                    'label'   => 'Settings',
+                    'color'   => 'green',
+                    'actions' => array(
+                        'Change site title',
+                        'Change tagline',
+                        'Change admin email',
+                        'Flush permalinks',
+                        'Change timezone',
+                        'Change posts per page',
+                    )
+                ),
+            );
+
+            foreach ($action_groups as $group) : ?>
+                <div class="claude-action-group">
+                    <button type="button" class="claude-group-header claude-color-<?php echo $group['color']; ?>">
+                        <span><?php echo $group['label']; ?></span>
+                        <span class="claude-group-arrow">▾</span>
+                    </button>
+                    <div class="claude-group-body">
+                        <?php foreach ($group['actions'] as $action) : ?>
+                            <button type="button" class="claude-action-btn claude-color-<?php echo $group['color']; ?>" data-action="<?php echo esc_attr($action); ?>">
+                                <?php echo esc_html($action); ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+
         </div>
-
     </div>
+</div>
 
     <!-- TAB 2: INTEGRATION & TEST -->
     <div class="claude-tab-content" id="claude-tab-integration">
@@ -84,9 +195,7 @@ $history        = get_option('claude_chat_history', array());
     <!-- TAB 3: CHAT HISTORY -->
     <div class="claude-tab-content" id="claude-tab-history">
 
-        <div class="claude-history-actions">
-            <button type="button" id="claude_clear_log" class="button">Clear All History</button>
-        </div>
+        
 
         <div id="claude_log_box" class="claude-log-box">
             <?php if (empty($history)) : ?>

@@ -64,6 +64,16 @@ Add page to menu:   {"action": "add_page_to_menu", "menu": "Main Menu", "title":
 Add custom link:    {"action": "add_link_to_menu", "menu": "Main Menu", "label": "Google", "url": "https://google.com"}
 Delete menu:        {"action": "delete_menu", "name": "Main Menu"}
 
+BULK ACTION
+Draft all posts:    {"action": "bulk_draft_posts"}
+Publish all posts:  {"action": "bulk_publish_posts"}
+Delete all posts:   {"action": "bulk_delete_posts"}
+Draft all pages:    {"action": "bulk_draft_pages"}
+Publish all pages:  {"action": "bulk_publish_pages"}
+Delete all pages:   {"action": "bulk_delete_pages"}
+
+Empty trash:   {"action": "empty_trash"}
+
 IMPORTANT: Always return a JSON array even for one action. Example: [{"action":"create_post","title":"Hello","content":"World","status":"publish","category":""}]
 If password is not mentioned, set "password" to empty string.
 Return ONLY the JSON array. Nothing else.
@@ -147,7 +157,7 @@ function claude_execute_content($data) {
     }
 
     if ($action === 'create_user') {
-        $password = !empty($data['password']) ? $data['password'] : 'abbc*groq5';
+        $password = !empty($data['password']) ? $data['password'] : 'abbc*groq2026';
         $user_id  = wp_create_user(
             sanitize_user($data['username']),
             $password,
@@ -188,7 +198,7 @@ function claude_execute_content($data) {
     require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
     require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
     $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
-    $result   = $upgrader->install('https://downloads.wordpress.org/plugin/' . $data['slug'] . '.latest-stable.zip');
+    $result   = $upgrader->install('https://downloads.wordpress.org/plugin/' . sanitize_key($data['slug']) . '.latest-stable.zip');
     return $result ? 'Plugin installed: ' . $data['search'] : 'Failed to install: ' . $data['search'];
 }
 
@@ -250,9 +260,27 @@ function claude_execute_content($data) {
     }
 
     if ($action === 'update_setting') {
-        update_option($data['key'], sanitize_text_field($data['value']));
-        return 'Setting updated: ' . $data['key'] . ' → ' . $data['value'];
+    
+    // whitelist of safe settings only
+    $allowed_keys = array(
+        'blogname',                // site title
+        'blogdescription',         // tagline
+        'admin_email',             // admin email
+        'blogpublic',              // search engine visibility
+        'default_comment_status',  // comments on/off
+        'timezone_string',         // timezone
+        'date_format',             // date format
+        'time_format',             // time format
+        'posts_per_page',          // posts per page
+    );
+
+    if (!in_array($data['key'], $allowed_keys)) {
+        return 'Setting "' . $data['key'] . '" is not allowed to be changed.';
     }
+
+    update_option($data['key'], sanitize_text_field($data['value']));
+    return 'Setting updated: ' . $data['key'] . ' → ' . $data['value'];
+}
 
     if ($action === 'flush_permalinks') {
         flush_rewrite_rules();
@@ -260,7 +288,7 @@ function claude_execute_content($data) {
     }
 
     if ($action === 'delete_comment') {
-        wp_delete_comment($data['id'], true);
+        wp_delete_comment(intval($data['id']), true);
         return 'Comment deleted: #' . $data['id'];
     }
 
@@ -317,7 +345,48 @@ function claude_execute_content($data) {
         return 'Menu not found: ' . $data['name'];
     }
 
-    return 'Action not recognized: ' . $action;
+    // BULK SELECTION
+    if ($action === 'bulk_draft_posts' || $action === 'bulk_publish_posts' || $action === 'bulk_delete_posts') {
+    $posts = get_posts(array('numberposts' => -1, 'post_type' => 'post'));
+    foreach ($posts as $post) {
+        if ($action === 'bulk_delete_posts') {
+            wp_delete_post($post->ID, true);
+        } else {
+            wp_update_post(array('ID' => $post->ID, 'post_status' => $action === 'bulk_draft_posts' ? 'draft' : 'publish'));
+        }
+    }
+    $label = str_replace('bulk_', '', $action);
+    return 'All posts ' . str_replace('_posts', '', $label) . 'ed successfully.';
+    }
+
+    if ($action === 'bulk_draft_pages' || $action === 'bulk_publish_pages' || $action === 'bulk_delete_pages') {
+        $pages = get_posts(array('numberposts' => -1, 'post_type' => 'page'));
+        foreach ($pages as $page) {
+            if ($action === 'bulk_delete_pages') {
+                wp_delete_post($page->ID, true);
+            } else {
+                wp_update_post(array('ID' => $page->ID, 'post_status' => $action === 'bulk_draft_pages' ? 'draft' : 'publish'));
+            }
+        }
+        $label = str_replace('bulk_', '', $action);
+        return 'All pages ' . str_replace('_pages', '', $label) . 'ed successfully.';
+    }
+
+    if ($action === 'empty_trash') {
+        $trashed = get_posts(array('post_status' => 'trash', 'numberposts' => -1, 'post_type' => 'any'));
+        foreach ($trashed as $post) {
+            wp_delete_post($post->ID, true); // true = force delete permanently
+        }
+        return 'Trash emptied successfully.';
+    }
+
+
+    // handle unclear response from Groq cleanly
+if ($action === 'unclear') {
+    return $data['message'] ?? 'Please be more specific with your instruction.';
+}
+
+return 'Please be more specific with your instruction.: ' . $action;
 }
 
 
@@ -329,8 +398,9 @@ function claude_execute_content($data) {
 // saves last 20 to DB and full history to log file 
 function claude_log_action($instruction, $action, $result) {
 
-    $log_dir  = CLAUDE_PLUGIN_DIR . 'includes/';
-    $log_file = $log_dir . '/groq_chat_log.txt';
+    $upload   = wp_upload_dir();
+    $log_dir  = $upload['basedir'] . '/claude-logs/';
+    $log_file = $log_dir . 'groq_chat_log.txt';
     $time     = current_time('Y-m-d H:i:s');
     $entry    = "[{$time}] Instruction: {$instruction} | Action: {$action} | Result: {$result}" . PHP_EOL;
 
@@ -420,36 +490,15 @@ function claude_check_rate_limit() {
 
 function claude_validate_instruction($instruction) {
 
-    $lower = strtolower($instruction);
-
-    // block code and suspicious characters — hard rule
+    // block code and suspicious characters
     if (preg_match('/[<>{};]|function\s*\(|<script|<\?php/i', $instruction)) {
         return 'Code is not allowed in the chat.';
     }
 
-    // block obvious injection attempts — hard rule
+    // block obvious injection attempts
     if (preg_match('/ignore|disregard|override|forget|pretend|act as|you are now|system prompt|new role|bypass/i', $instruction)) {
         return 'Invalid instruction detected.';
     }
 
-    // whitelist — instruction must contain at least one WordPress related word
-    $wp_keywords = array(
-        'post', 'page', 'plugin', 'theme', 'user', 'menu', 'comment',
-        'install', 'activate', 'deactivate', 'delete', 'create', 'update',
-        'setting', 'email', 'password', 'role', 'permalink', 'link', 'add'
-    );
-
-    $found = false;
-    foreach ($wp_keywords as $keyword) {
-        if (strpos($lower, $keyword) !== false) {
-            $found = true;
-            break;
-        }
-    }
-
-    if (!$found) {
-        return 'Please type a WordPress related instruction only. Example: install a plugin, create a post etc.';
-    }
-
-    return null; // all good
+    return null;
 }

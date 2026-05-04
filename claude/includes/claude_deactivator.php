@@ -1,22 +1,14 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-/**
- * Claude_Deactivator class
- * Handles everything that runs when the plugin is deactivated
- */
 class Claude_Deactivator {
 
-    /**
-     * 'static' method — same reason as activator
-     * called directly without creating an instance
-     */
     public static function deactivate() {
 
-        // Check if we have any scheduled cron jobs and remove them
-        $timestamp = wp_next_scheduled('claude_scheduled_task');
-        if ($timestamp) {
-            wp_unschedule_event($timestamp, 'claude_scheduled_task');
+        // clear rate limit transients for all users
+        $users = get_users(array('fields' => 'ID'));
+        foreach ($users as $user_id) {
+            delete_transient('claude_rate_' . $user_id);
         }
 
         // WordPress recommendation on deactivation

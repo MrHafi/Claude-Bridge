@@ -1,0 +1,90 @@
+.claude-wrap { max-width: 900%; }
+
+/* TABS */
+.claude-tabs { display: flex; gap: 4px; margin-bottom: 0; border-bottom: 1px solid #ccc; padding-bottom: 0; }
+.claude-tab-btn { background: #f1f1f1; border: 1px solid #ccc; border-bottom: none; padding: 8px 20px; cursor: pointer; font-size: 14px; border-radius: 4px 4px 0 0; color: #555; }
+.claude-tab-btn.active { background: #fff; color: #000; border-bottom: 1px solid #fff; margin-bottom: -1px; }
+.claude-tab-btn:hover { background: #fff; }
+
+/* TAB CONTENT */
+.claude-tab-content { display: none; padding: 20px 0; }
+.claude-tab-content.active { display: block; }
+
+/* CHAT */
+.claude-desc { color: #666; margin-bottom: 12px; }
+.claude-chat-box { background: #1e1e1e; border-radius: 8px; padding: 20px; margin-bottom: 15px; min-height: 150px; color: #fff; font-size: 14px; }
+.claude-chat-placeholder { color: #888; margin: 0; }
+.claude-textarea { width: 100%; padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc; resize: vertical; box-sizing: border-box; }
+.claude-chat-actions { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+.claude-loading { display: none; color: #666; font-size: 13px; }
+
+/* INTEGRATION */
+.claude-integration-actions { display: flex; gap: 8px; margin-top: 10px; }
+.claude-notice { padding: 10px; background: #ecf7ed; border-left: 4px solid #46b450; margin-bottom: 15px; }
+.claude-test-result { margin-top: 10px; font-size: 14px; }
+
+/* HISTORY */
+.claude-history-actions { margin-bottom: 15px; }
+.claude-log-box { background: #1e1e1e; border-radius: 8px; padding: 20px; min-height: 100px; font-family: monospace; font-size: 13px; }
+.claude-log-empty { color: #888; margin: 0; }
+.claude-log-entry { border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 3px; }
+.claude-log-entry:last-child { border-bottom: none; margin-bottom: 0; }
+.claude-log-time { color: #888; }
+.claude-log-you { color: #7c6aff; }
+.claude-log-action { color: #aaa; }
+.claude-log-result { color: #38a169; }
+
+
+
+
+
+
+/* CHAT LAYOUT */
+.claude-chat-layout { display: flex; gap: 20px; align-items: flex-start; }
+.claude-chat-left { flex: 0 0 60%; }
+.claude-actions-panel { flex: 0 0 38%; background: var(--color-background-primary, #fff); border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+
+/* PANEL HEADER */
+.claude-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f9f9f9; border-bottom: 1px solid #e0e0e0; }
+.claude-panel-title { font-size: 13px; font-weight: 600; color: #333; }
+.claude-toggle-all-btn { font-size: 11px; background: none; border: 1px solid #ccc; border-radius: 4px; padding: 3px 8px; cursor: pointer; color: #555; }
+.claude-toggle-all-btn:hover { background: #f0f0f0; }
+
+/* GROUP HEADER */
+.claude-group-header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border: none; border-bottom: 1px solid rgba(0,0,0,0.06); cursor: pointer; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+.claude-group-header:hover { filter: brightness(0.95); }
+.claude-group-arrow { font-size: 12px; transition: transform 0.2s; }
+.claude-group-header.collapsed .claude-group-arrow { transform: rotate(-90deg); }
+
+/* GROUP BODY */
+.claude-group-body { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+.claude-group-body.hidden { display: none; }
+
+/* ACTION BUTTONS */
+.claude-action-btn { font-size: 11px; padding: 4px 10px; border: none; border-radius: 20px; cursor: pointer; font-weight: 500; transition: opacity 0.15s, transform 0.1s; }
+.claude-action-btn:hover { opacity: 0.85; transform: scale(1.03); }
+.claude-action-btn:active { transform: scale(0.97); }
+
+/* COLORS - group headers */
+.claude-color-purple { background: #7c6aff; color: #fff; }
+.claude-color-teal    { background: #1D9E75; color: #fff; }
+.claude-color-amber   { background: #EF9F27; color: #fff; }
+.claude-color-blue    { background: #378ADD; color: #fff; }
+.claude-color-pink    { background: #D4537E; color: #fff; }
+.claude-color-red     { background: #E24B4A; color: #fff; }
+.claude-color-green   { background: #639922; color: #fff; }
+
+/* ACTION BUTTON LIGHTER SHADES */
+.claude-group-body .claude-color-purple { background: #ede9ff; color: #4a3bbf; }
+.claude-group-body .claude-color-teal   { background: #d4f2e8; color: #0a6b4a; }
+.claude-group-body .claude-color-amber  { background: #fef0d4; color: #8a5c0a; }
+.claude-group-body .claude-color-blue   { background: #daeeff; color: #1056a0; }
+.claude-group-body .claude-color-pink   { background: #fde0eb; color: #8f2a50; }
+.claude-group-body .claude-color-red    { background: #fde0e0; color: #991f1f; }
+.claude-group-body .claude-color-green  { background: #e6f2cc; color: #3a5c10; }
+
+
+
+
+
+

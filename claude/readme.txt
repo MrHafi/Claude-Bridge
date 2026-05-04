@@ -1,8 +1,8 @@
-=== Claude by Hafi ===
+=== AI Site Manager ===
 Contributors: hafi
 Tags: ai, claude, groq, wordpress assistant, automation
 Requires at least: 5.8
-Tested up to: 6.5
+Tested up to: 6.9
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -12,7 +12,7 @@ AI-powered WordPress assistant that lets you manage your site using natural lang
 
 == Description ==
 
-Claude by Hafi connects your WordPress dashboard to Groq AI, allowing you to manage your site by simply typing instructions in plain English.
+AI Site Manager connects your WordPress dashboard to Groq AI, allowing you to manage your site by simply typing instructions in plain English.
 
 **What you can do:**
 * Create and delete posts and pages
@@ -34,7 +34,7 @@ Please review Groq's privacy policy at https://groq.com/privacy before using thi
 
 1. Upload the plugin folder to `/wp-content/plugins/`
 2. Activate the plugin through the Plugins menu in WordPress
-3. Go to Claude by Hafi in your admin sidebar
+3. Go to AI Site Manager in your admin sidebar
 4. Enter your Groq API key in the Integration tab
 5. Enable Content Access toggle
 6. Start typing instructions in the Chat tab

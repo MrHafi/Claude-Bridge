@@ -23,7 +23,6 @@ jQuery(document).ready(function($) {
 
     // Test Groq connection — MUST be inside ready()
 $('#claude_test_groq').on('click', function() {
-    console.log('test clicked');
     $('#claude_test_result').show().html('Testing...');
 
     $.post(claude_ajax.ajax_url, {
@@ -94,6 +93,41 @@ $('.claude-tab-btn').on('click', function() {
 
     $(this).addClass('active');                              // activate clicked button
     $('#claude-tab-' + tab).addClass('active');              // show matching content
+});
+
+
+
+
+
+// ADMIN PANEL VIEW
+// collapse/expand individual group
+$('.claude-group-header').on('click', function() {
+    var body = $(this).next('.claude-group-body');
+    body.toggleClass('hidden');
+    $(this).toggleClass('collapsed');
+});
+
+// collapse/expand all groups
+$('#claude_toggle_all').on('click', function() {
+    var allBodies  = $('.claude-group-body');
+    var allHeaders = $('.claude-group-header');
+    var isAnyOpen  = allBodies.not('.hidden').length > 0;
+
+    if (isAnyOpen) {
+        allBodies.addClass('hidden');
+        allHeaders.addClass('collapsed');
+        $(this).text('Expand All');
+    } else {
+        allBodies.removeClass('hidden');
+        allHeaders.removeClass('collapsed');
+        $(this).text('Collapse All');
+    }
+});
+
+// click action button → autofill chat input
+$('.claude-action-btn').on('click', function() {
+    var action = $(this).data('action');
+    $('#claude_chat_input').val(action).focus(); // fill and focus input
 });
 
 

@@ -1,9 +1,11 @@
 <?php
 /**
- * Plugin Name: Claude by Hafi
- * Description: Integrates Claude AI with WordPress
+ * Plugin Name: AI Site Manager
+ * Description: Integrates  AI with WordPress
  * Version: 1.0.0
  * Author: Hafi
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 if (!defined('ABSPATH')) exit;
 
@@ -22,7 +24,7 @@ require_once CLAUDE_PLUGIN_DIR . 'includes/claude_content.php';
  * Main plugin class — acts as the manager.
  * Its only job is to initialize everything.
  */
-class Claude {
+class Claude_By_Hafi  {
 
     public function __construct() {
 
@@ -38,4 +40,4 @@ class Claude {
 
 // Create an instance of the main class to kick everything off
 // This is the single line that starts the whole plugin
-new Claude();
+new Claude_By_Hafi ();
