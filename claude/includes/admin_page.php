@@ -82,7 +82,7 @@ class Claude_Admin {
         }
 
         $settings = array(
-            'api_key'        => sanitize_text_field($_POST['api_key']),
+            
             'groq_api_key' => sanitize_text_field($_POST['groq_api_key']),
             'content_access' => !empty($_POST['content_access']) ? 1 : 0,
             'file_access'    => !empty($_POST['file_access'])    ? 1 : 0,
