@@ -3,7 +3,6 @@
 // THIS FILE IS FOR FRONTEND OF OF ADMIN MENUS
 
 $options        = get_option('claude_settings', array());
-$api_key        = !empty($options['api_key'])        ? esc_attr($options['api_key'])      : '';
 $groq_api_key   = !empty($options['groq_api_key'])   ? esc_attr($options['groq_api_key']) : '';
 $content_access = !empty($options['content_access']) ? 1 : 0;
 $file_access    = !empty($options['file_access'])    ? 1 : 0;
@@ -161,10 +160,10 @@ $history        = get_option('claude_chat_history', array());
         <div id="claude_notice" class="claude-notice" style="display:none;"></div>
 
         <table class="form-table">
-            <tr>
+            <!-- <tr>
                 <th>Claude API Key</th>
                 <td><input type="password" id="claude_api_key" value="<?php echo $api_key; ?>" class="regular-text"/></td>
-            </tr>
+            </tr> -->
             <tr>
                 <th>Groq API Key</th>
                 <td><input type="password" id="claude_groq_api_key" value="<?php echo $groq_api_key; ?>" class="regular-text"/></td>

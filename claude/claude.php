@@ -20,6 +20,12 @@ require_once CLAUDE_PLUGIN_DIR . 'includes/claude_deactivator.php';
 require_once CLAUDE_PLUGIN_DIR . 'includes/admin_page.php';
 require_once CLAUDE_PLUGIN_DIR . 'includes/claude_content.php';
 
+// FILE HANDLING FILES
+require_once CLAUDE_PLUGIN_DIR . 'includes/file-manager/file_validator.php';
+require_once CLAUDE_PLUGIN_DIR . 'includes/file-manager/file_reader.php';
+
+
+
 /**
  * Main plugin class — acts as the manager.
  * Its only job is to initialize everything.
