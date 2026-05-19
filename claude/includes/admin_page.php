@@ -100,12 +100,12 @@ class Claude_Admin {
 // test groq connection
 public function test_groq_connection() {
 
-        // sec check
-        if (!current_user_can('manage_options')) {
-        wp_send_json_error(array('message' => 'Unauthorized.'));
-        }
+            // sec cehck 
+            check_ajax_referer('claude_nonce', 'nonce');
+            if (!current_user_can('manage_options')) { //ADMIUN ONLY 
+                wp_send_json_error(array('message' => 'Unauthorized.'));
+            }
 
-    check_ajax_referer('claude_nonce', 'nonce');
 
     $options      = get_option('claude_settings', array());
     $groq_api_key = !empty($options['groq_api_key']) ? $options['groq_api_key'] : ''; //grab key if not empty
@@ -189,6 +189,13 @@ public function handle_instruction() {
         wp_send_json_error(array('message' => 'Content access is OFF. Enable it in settings first.'));
     }
 
+    // STOP IF  FILE ACCESS TOGGLE IS OFF
+    if (in_array($action_data['action'], array('read_file', 'write_file', 'delete_file'))) {
+        if (empty($options['file_access'])) {
+            wp_send_json_error(array('message' => 'File access is OFF. Enable it in settings first.'));
+        }
+    }
+
     // Send instruction to Groq and get back an array of actions
     $actions = claude_ask_groq($instruction, $options['groq_api_key']);
 
@@ -209,6 +216,8 @@ public function handle_instruction() {
         'bulk_draft_posts', 'bulk_publish_posts', 'bulk_delete_posts',
         'bulk_draft_pages', 'bulk_publish_pages', 'bulk_delete_pages',
         'empty_trash',
+
+         'read_file',
         'unclear'
     );
 

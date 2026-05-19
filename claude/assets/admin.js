@@ -1,3 +1,12 @@
+
+// converts basic markdown to HTML so it renders properly in CHATBOX
+function parseMarkdown(text) {
+    return text
+        .replace(/^(PURPOSE|FUNCTIONS|HOOKS|CONSTANTS|INCLUDED FILES)/gm, '<strong>$1</strong>')  // bold section titles
+        .replace(/\n{2,}/g, '<br><br>')   // double newline → paragraph break
+        .replace(/\n/g, '<br>');          // single newline → line break
+}
+
 jQuery(document).ready(function($) {
 
     // Save button click handler
@@ -68,8 +77,10 @@ $('#claude_send_btn').on('click', function() {
         $('#claude_chat_input').val('');
 
         if (response.success) {
-            $('#claude_chat_box').append(
-                '<p><strong style="color:#38a169;">Claude:</strong> ' + response.data.message + '</p>'
+           $('#claude_chat_box').append(
+                '<div style="margin-bottom:12px;"><strong style="color:#38a169;">Claude:</strong><br>' 
+                + parseMarkdown(response.data.message)   // ← parse markdown before appending
+                + '</div>'
             );
         } else {
             $('#claude_chat_box').append(

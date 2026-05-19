@@ -74,6 +74,14 @@ Delete all pages:   {"action": "bulk_delete_pages"}
 
 Empty trash:   {"action": "empty_trash"}
 
+FILE MANAGER:
+Read file:              {\"action\": \"read_file\", \"filename\": \"functions.php\", \"location\": \"\"}
+Read file from location:{\"action\": \"read_file\", \"filename\": \"functions.php\", \"location\": \"active theme\"}
+
+For location — only use these keywords: theme, active theme, parent theme, plugin, this plugin, plugins, themes
+If user did not mention a location — always set location to empty string.
+
+
 IMPORTANT: Always return a JSON array even for one action. Example: [{"action":"create_post","title":"Hello","content":"World","status":"publish","category":""}]
 If password is not mentioned, set "password" to empty string.
 Return ONLY the JSON array. Nothing else.
@@ -344,6 +352,27 @@ function claude_execute_content($data) {
         }
         return 'Menu not found: ' . $data['name'];
     }
+
+                        // FILE MANEGER --------------
+                    if ($action === 'read_file') {
+
+                        $filename        = $data['filename'] ?? '';                              // get filename from Groq response e.g. "functions.php"
+                        $location        = $data['location'] ?? '';                              // get location if user specified e.g. "active theme"
+                        $options         = get_option('claude_settings', array());               // get plugin settings from DB
+                        $groq_api_key    = $options['groq_api_key'] ?? '';                       // grab the Groq API key
+
+                        if (empty($filename)) {                                                  // stop if Groq didn't return a filename
+                            return 'Please specify a filename to read.';
+                        }
+
+                        if (!empty($location)) {   //specific locaation 
+                            return claude_read_file_from_location($filename, $location, $groq_api_key);  // search only in that location
+                        }
+
+                        return claude_read_file($filename, $groq_api_key);                       // no location given — search everywhere
+                    }
+
+
 
     // BULK SELECTION
     if ($action === 'bulk_draft_posts' || $action === 'bulk_publish_posts' || $action === 'bulk_delete_posts') {
